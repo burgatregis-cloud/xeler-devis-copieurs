@@ -1171,14 +1171,14 @@ const DEFAULT_DATA = {
 /* ================================================================
    ETAT / STOCKAGE
    ================================================================ */
-const LS_KEY = "xeler_devis_data_v1";
-const LS_HISTORY = "xeler_devis_historique_v1";
+const LS_KEY = "xeler_devis_copieurs_data_v1";
+const LS_HISTORY = "xeler_devis_copieurs_historique_v1";
 
 function loadData(){
   const raw = localStorage.getItem(LS_KEY);
   let data;
   if(!raw){ localStorage.setItem(LS_KEY, JSON.stringify(DEFAULT_DATA)); data = JSON.parse(JSON.stringify(DEFAULT_DATA)); }
-  else { try{ data = JSON.parse(raw); }catch(e){ data = JSON.parse(JSON.stringify(DEFAULT_DATA)); } }
+  else { try{ data = JSON.parse(raw); if(!data || !Array.isArray(data.copieurs)) throw new Error("schema"); }catch(e){ data = JSON.parse(JSON.stringify(DEFAULT_DATA)); } }
   if(!data.financement) data.financement = JSON.parse(JSON.stringify(DEFAULT_DATA.financement));
     if(data.entreprise && !data.entreprise.rib) data.entreprise.rib = JSON.parse(JSON.stringify(DEFAULT_DATA.entreprise.rib));
     if(data.entreprise && data.entreprise.conditionsPaiement===undefined) data.entreprise.conditionsPaiement = DEFAULT_DATA.entreprise.conditionsPaiement;
