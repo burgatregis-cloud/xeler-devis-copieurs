@@ -330,6 +330,13 @@ hr.sep{border:none; border-top:1px solid var(--card-border); margin:18px 0;}
 .admin-item-sub{font-size:0.74rem; color:var(--text-faint);}
 .admin-item-actions{margin-left:auto; display:flex; gap:6px;}
 
+.cap-tarif-row{display:flex; align-items:center; gap:14px; padding:10px 12px; border:1px solid var(--card-border); border-radius:10px; margin-bottom:6px; background:#fff; flex-wrap:wrap;}
+.cap-tarif-name{flex:1; min-width:180px; font-weight:600; font-size:0.85rem;}
+.cap-tarif-name .cap-tarif-cat{font-weight:400; color:var(--text-faint); font-size:0.78rem;}
+.cap-tarif-field{display:flex; align-items:center; gap:8px;}
+.cap-tarif-field label{margin-bottom:0; white-space:nowrap;}
+.cap-tarif-field input{width:90px; margin-bottom:0;}
+
 .modal-overlay{
   position:fixed; inset:0; background:rgba(22,33,62,0.55); backdrop-filter:blur(3px);
   display:flex; align-items:flex-start; justify-content:center; z-index:100; padding:30px 16px; overflow-y:auto;
@@ -556,6 +563,11 @@ hr.sep{border:none; border-top:1px solid var(--card-border); margin:18px 0;}
           <div class="field"><label>Description (affichée sur le devis)</label><textarea id="maint-desc" rows="2"></textarea></div>
           <button class="btn btn-primary btn-sm" onclick="saveMaintenance()">Enregistrer</button>
         </div>
+
+        <h3 style="font-family:var(--font-display); font-size:1.05rem; margin:26px 0 12px;">Tarifs au relevé (facturation au volume)</h3>
+        <div class="banner-note">Pour chaque référence, renseignez le tarif HT au 1 000 copies relevées au compteur — par exemple 7 € HT/1000 en noir & blanc et 70 € HT/1000 en couleur. Laissez un champ vide si non applicable (ex. modèle impression seule N&B, pas de tarif couleur). Ces tarifs sont propres à chaque copieur/imprimante et s'ajoutent au forfait mensuel ci-dessus.</div>
+        <div id="admin-cap-tarifs-list"></div>
+        <button class="btn btn-primary btn-sm" style="margin-top:12px;" onclick="saveCapTarifs()">Enregistrer les tarifs au relevé</button>
       </div>
 
       <div class="admin-tab" id="admin-financement" style="display:none;">
@@ -1356,6 +1368,8 @@ function loadData(){
   if(!data.maintenance) data.maintenance = JSON.parse(JSON.stringify(DEFAULT_DATA.maintenance));
   (data.consommables||[]).forEach(c=>{ if(c.modeles===undefined) c.modeles = []; });
   (data.copieurs||[]).forEach(r=>{ if(r.prixLocation!==undefined) delete r.prixLocation; });
+  // Tarifs au relevé (prix HT / 1000 copies N&B et couleur) — un champ par référence, vide tant que non renseigné.
+  (data.copieurs||[]).forEach(r=>{ if(r.capNb1000===undefined) r.capNb1000=null; if(r.capCouleur1000===undefined) r.capCouleur1000=null; });
   // Ajoute au catalogue existant les nouveaux modèles introduits dans une mise à jour
   // (ex. gamme imprimantes HP) sans toucher aux modèles déjà présents/modifiés par l'utilisateur.
   const existingIds = new Set((data.copieurs||[]).map(c=>c.id));
@@ -2390,6 +2404,7 @@ function renderAdminAll(){
   const maint = DATA.maintenance;
   document.getElementById("maint-prix").value = maint.prix;
   document.getElementById("maint-desc").value = maint.description || "";
+  renderAdminCapTarifs();
 }
 function saveFinancement(){
   DATA.financement = {
@@ -2584,7 +2599,10 @@ function saveCopieur(id){
     installation: {
       surDevis: document.getElementById("rm-install-surdevis").checked,
       prix: document.getElementById("rm-install-surdevis").checked ? null : (document.getElementById("rm-install-prix").value==="" ? null : parseFloat(document.getElementById("rm-install-prix").value)||0)
-    }
+    },
+    // Tarifs au relevé : édités depuis Administration → Coût à la page, pas depuis cette fiche — on les préserve tels quels.
+    capNb1000: existing ? (existing.capNb1000!=null?existing.capNb1000:null) : null,
+    capCouleur1000: existing ? (existing.capCouleur1000!=null?existing.capCouleur1000:null) : null,
   };
   if(id){
     const idx = DATA.copieurs.findIndex(r=>r.id===id);
@@ -2668,6 +2686,30 @@ function saveMaintenance(){
     description: document.getElementById("maint-desc").value.trim()
   };
   saveData(); renderAll(); toast("Contrat coût à la page enregistré.");
+}
+
+function renderAdminCapTarifs(){
+  const wrap = document.getElementById("admin-cap-tarifs-list");
+  if(!wrap) return;
+  wrap.innerHTML = DATA.copieurs.map(r=>`
+    <div class="cap-tarif-row" data-id="${r.id}">
+      <div class="cap-tarif-name">${r.nom} <span class="cap-tarif-cat">— ${r.brand} · ${r.categorie}</span></div>
+      <div class="cap-tarif-field"><label>N&B /1000 (€HT)</label><input type="number" step="0.01" min="0" class="cap-nb-input" value="${r.capNb1000!=null?r.capNb1000:''}" placeholder="ex. 7"></div>
+      <div class="cap-tarif-field"><label>Couleur /1000 (€HT)</label><input type="number" step="0.01" min="0" class="cap-couleur-input" value="${r.capCouleur1000!=null?r.capCouleur1000:''}" placeholder="ex. 70"></div>
+    </div>
+  `).join("") || `<div class="empty-state"><div class="ic">🖨️</div>Aucun copieur dans le catalogue.</div>`;
+}
+function saveCapTarifs(){
+  document.querySelectorAll("#admin-cap-tarifs-list .cap-tarif-row").forEach(row=>{
+    const r = DATA.copieurs.find(c=>c.id===row.dataset.id);
+    if(!r) return;
+    const nbVal = row.querySelector(".cap-nb-input").value;
+    const colVal = row.querySelector(".cap-couleur-input").value;
+    r.capNb1000 = nbVal===""? null : (parseFloat(nbVal)||0);
+    r.capCouleur1000 = colVal===""? null : (parseFloat(colVal)||0);
+  });
+  saveData();
+  toast("Tarifs au relevé enregistrés.");
 }
 
 function closeModal(id){ const el = document.getElementById(id); if(el) el.remove(); }
