@@ -450,6 +450,7 @@ hr.sep{border:none; border-top:1px solid var(--card-border); margin:18px 0;}
                 <span id="maintenance-label">Inclure le contrat coût à la page</span>
               </label>
               <div id="maintenance-desc" style="font-size:0.78rem; color:var(--text-faint); margin-top:6px;"></div>
+              <div id="cap-rates-list" style="margin-top:12px;"></div>
             </div>
           </div>
         </div>
@@ -557,15 +558,14 @@ hr.sep{border:none; border-top:1px solid var(--card-border); margin:18px 0;}
       </div>
 
       <div class="admin-tab" id="admin-maintenance" style="display:none;">
-        <div class="banner-note">Le contrat coût à la page (CAP) peut être coché sur chaque devis — il incorpore la fourniture des consommables, les pièces d'usure, la maintenance et le déplacement technicien. Ce module modélise un forfait mensuel indicatif ; la vraie facturation au volume (prix/page N&B et couleur) pourra être affinée avec vous ensuite.</div>
-        <div class="card" style="max-width:480px;">
-          <div class="field"><label>Forfait mensuel indicatif HT (€)</label><input type="number" id="maint-prix"></div>
-          <div class="field"><label>Description (affichée sur le devis)</label><textarea id="maint-desc" rows="2"></textarea></div>
+        <div class="banner-note">Le contrat coût à la page (CAP) peut être coché sur chaque devis : il incorpore la fourniture des consommables (hors papier), les pièces d'usure, la maintenance et le déplacement technicien, facturés au volume réel sur relevé des compteurs noir &amp; blanc et couleur. Il n'y a plus de forfait mensuel fixe — seuls les tarifs au 1 000 copies ci-dessous s'affichent sur le devis, et ils restent modifiables devis par devis si le client négocie.</div>
+        <div class="card" style="max-width:640px;">
+          <div class="field"><label>Description du contrat (affichée sur le devis)</label><textarea id="maint-desc" rows="2"></textarea></div>
           <button class="btn btn-primary btn-sm" onclick="saveMaintenance()">Enregistrer</button>
         </div>
 
         <h3 style="font-family:var(--font-display); font-size:1.05rem; margin:26px 0 12px;">Tarifs au relevé (facturation au volume)</h3>
-        <div class="banner-note">Pour chaque référence, renseignez le tarif HT au 1 000 copies relevées au compteur — par exemple 7 € HT/1000 en noir & blanc et 70 € HT/1000 en couleur. Laissez un champ vide si non applicable (ex. modèle impression seule N&B, pas de tarif couleur). Ces tarifs sont propres à chaque copieur/imprimante et s'ajoutent au forfait mensuel ci-dessus.</div>
+        <div class="banner-note">Pour chaque référence, renseignez le tarif HT au 1 000 copies relevées au compteur — par exemple 7 € HT/1000 en noir & blanc et 70 € HT/1000 en couleur. Laissez un champ vide si non applicable (ex. modèle impression seule N&B, pas de tarif couleur). Les références RICOH qui ne diffèrent que par leurs options (ex. IM C3010 / C3010A / C3510 / C3510A) sont regroupées automatiquement : un seul tarif saisi s'applique à toute la ligne.</div>
         <div id="admin-cap-tarifs-list"></div>
         <button class="btn btn-primary btn-sm" style="margin-top:12px;" onclick="saveCapTarifs()">Enregistrer les tarifs au relevé</button>
       </div>
@@ -1345,8 +1345,7 @@ const DEFAULT_DATA = {
     {id: "kit-tambour", nom: "Kit tambour (PCU)", prix: 180, unite: "unité", modeles: []}
   ],
   maintenance: {
-    prix: 45,
-    description: "Contrat coût à la page : fourniture des consommables (hors papier), pièces d'usure, maintenance et déplacement technicien inclus. Forfait mensuel indicatif hors compteur — à affiner selon le volume réel du client (tarif au recto).",
+    description: "Contrat coût à la page : fourniture des consommables (hors papier), pièces d'usure, maintenance et déplacement technicien inclus. Facturation au volume réel, sur relevé des compteurs noir & blanc et couleur — tarifs au 1 000 copies indiqués ci-dessous.",
     argumentaire: "Un copieur en panne, c'est un service à l'arrêt. Le contrat coût à la page couvre le déplacement, la main-d'œuvre, les pièces d'usure et les consommables (hors papier) : un coût prévisible, pas de mauvaise surprise — intervention sous engagement de délai."
   }
 };
@@ -1366,6 +1365,8 @@ function loadData(){
     if(data.entreprise && !data.entreprise.rib) data.entreprise.rib = JSON.parse(JSON.stringify(DEFAULT_DATA.entreprise.rib));
     if(data.entreprise && data.entreprise.conditionsPaiement===undefined) data.entreprise.conditionsPaiement = DEFAULT_DATA.entreprise.conditionsPaiement;
   if(!data.maintenance) data.maintenance = JSON.parse(JSON.stringify(DEFAULT_DATA.maintenance));
+  // Le forfait mensuel fixe du CAP est supprimé (2026-09-02) : seuls les tarifs au relevé par référence subsistent.
+  if(data.maintenance && data.maintenance.prix!==undefined) delete data.maintenance.prix;
   (data.consommables||[]).forEach(c=>{ if(c.modeles===undefined) c.modeles = []; });
   (data.copieurs||[]).forEach(r=>{ if(r.prixLocation!==undefined) delete r.prixLocation; });
   // Tarifs au relevé (prix HT / 1000 copies N&B et couleur) — un champ par référence, vide tant que non renseigné.
@@ -1491,9 +1492,15 @@ function renderCopieurGrid(){
   }).join("") || `<div class="empty-state"><div class="ic">🖨️</div>Aucun copieur dans le catalogue.<br>Ajoutez-en depuis Administration.</div>`;
 }
 
+function addCopieurToDevis(id){
+  const r = DATA.copieurs.find(x=>x.id===id);
+  // Les tarifs au relevé sont copiés depuis le catalogue au moment de la sélection : modifiables
+  // ensuite pour ce devis (négociation client) sans jamais toucher au tarif catalogue.
+  devis.copieurs[id] = {qty:1, options:[], capNb1000: r? r.capNb1000 : null, capCouleur1000: r? r.capCouleur1000 : null};
+}
 function toggleCopieur(id){
   if(devis.copieurs[id]){ delete devis.copieurs[id]; }
-  else{ devis.copieurs[id] = {qty:1, options:[]}; }
+  else{ addCopieurToDevis(id); }
   renderAll();
 }
 
@@ -1595,10 +1602,31 @@ function renderMaintenanceBlock(){
   const m = DATA.maintenance;
   const label = document.getElementById("maintenance-label");
   const desc = document.getElementById("maintenance-desc");
-  if(label) label.textContent = `Inclure le contrat coût à la page — ${fmt(m.prix)}/mois HT (forfait indicatif)`;
+  if(label) label.textContent = "Inclure le contrat coût à la page";
   if(desc) desc.textContent = m.description || "";
   const ck = document.getElementById("maintenance-toggle");
   if(ck) ck.checked = !!devis.maintenance;
+  renderCapRatesBlock();
+}
+
+function renderCapRatesBlock(){
+  const wrap = document.getElementById("cap-rates-list");
+  if(!wrap) return;
+  const ids = Object.keys(devis.copieurs);
+  if(!devis.maintenance || ids.length===0){ wrap.innerHTML = ""; return; }
+  wrap.innerHTML = `<div style="font-size:0.78rem; color:var(--text-faint); margin-bottom:8px;">Tarifs au relevé pour ce devis — préremplis depuis le catalogue, modifiables ici si négociés avec le client (le catalogue n'est jamais modifié) :</div>` +
+    ids.map(id=>{
+      const r = DATA.copieurs.find(x=>x.id===id);
+      if(!r) return "";
+      const sel = devis.copieurs[id];
+      const nb = sel.capNb1000!=null ? sel.capNb1000 : '';
+      const col = sel.capCouleur1000!=null ? sel.capCouleur1000 : '';
+      return `<div class="cap-tarif-row">
+        <div class="cap-tarif-name">${r.nom}</div>
+        <div class="cap-tarif-field"><label>N&B /1000 (€HT)</label><input type="number" step="0.01" min="0" value="${nb}" placeholder="—" onchange="devis.copieurs['${id}'].capNb1000=this.value===''?null:(parseFloat(this.value)||0); renderSummary();"></div>
+        <div class="cap-tarif-field"><label>Couleur /1000 (€HT)</label><input type="number" step="0.01" min="0" value="${col}" placeholder="—" onchange="devis.copieurs['${id}'].capCouleur1000=this.value===''?null:(parseFloat(this.value)||0); renderSummary();"></div>
+      </div>`;
+    }).join("");
 }
 
 function computeTotals(){
@@ -1638,8 +1666,7 @@ function computeTotals(){
   const mensualiteHT = htNet * taux;
   const mensualiteTva = mensualiteHT * 0.20;
   const mensualiteTtc = mensualiteHT + mensualiteTva;
-  const maintenanceTtc = devis.maintenance ? DATA.maintenance.prix * 1.20 : 0;
-  return {ht, remiseAmount, htNet, tva, ttc, mensualiteHT, mensualiteTva, mensualiteTtc, installationHT, installationSurDevisCount, maintenanceTtc};
+  return {ht, remiseAmount, htNet, tva, ttc, mensualiteHT, mensualiteTva, mensualiteTtc, installationHT, installationSurDevisCount};
 }
 
 function renderSummary(){
@@ -1653,7 +1680,7 @@ function renderSummary(){
     <div class="sum-line"><span>TVA (20%)</span><span>${fmt(t.tva)}</span></div>
     <div class="sum-line total"><span>Comptant TTC</span><span class="val">${fmt(t.ttc)}</span></div>
     <div class="sum-line total" style="font-size:1rem;"><span>ou ${fin.financeur} ${fin.duree} mois TTC</span><span class="val">${fmt(t.mensualiteTtc)}/mois</span></div>
-    ${devis.maintenance? `<div class="sum-line" style="font-size:0.8rem;"><span>+ Contrat CAP</span><span>${fmt(t.maintenanceTtc)}/mois</span></div>` : ''}
+    ${devis.maintenance? `<div class="sum-line" style="font-size:0.78rem; color:var(--text-faint);"><span>Contrat coût à la page</span><span>tarifs au relevé (voir devis)</span></div>` : ''}
   `;
 }
 
@@ -1764,6 +1791,22 @@ function renderDocument(){
       <tbody>${installRows}</tbody>
     </table>` : '';
 
+  let capRows = "";
+  Object.entries(devis.copieurs).forEach(([id,sel])=>{
+    const r = DATA.copieurs.find(x=>x.id===id); if(!r) return;
+    const nb = sel.capNb1000!=null ? sel.capNb1000 : r.capNb1000;
+    const col = sel.capCouleur1000!=null ? sel.capCouleur1000 : r.capCouleur1000;
+    if(nb==null && col==null) return;
+    capRows += `<tr><td>${r.nom}</td><td>${nb!=null?fmt(nb)+' HT':'—'}</td><td>${col!=null?fmt(col)+' HT':'—'}</td></tr>`;
+  });
+  const capHtml = devis.maintenance ? `
+    <div class="doc-section-label">Contrat coût à la page (CAP)</div>
+    <div class="doc-fin-mention" style="margin-top:0;">${DATA.maintenance.description||''}</div>
+    ${capRows? `<table class="doc-table-dark">
+      <thead><tr><th>Désignation</th><th>N&amp;B /1000 copies</th><th>Couleur /1000 copies</th></tr></thead>
+      <tbody>${capRows}</tbody>
+    </table>` : ''}` : '';
+
   const html = `
   <div class="doc-page-dark">
     <div class="doc-header-dark">
@@ -1781,7 +1824,7 @@ function renderDocument(){
     ${copieurCards}
     ${installHtml}
     ${consomHtml}
-    ${devis.maintenance? `<div class="doc-section-label">Contrat coût à la page (CAP)</div><div class="doc-fin-mention" style="margin-top:0;">${fmt(t.maintenanceTtc)} TTC / mois — ${DATA.maintenance.description||''}</div>` : ''}
+    ${capHtml}
 
     <div class="doc-totals-dark">
       <div class="doc-totals-block">
@@ -2112,14 +2155,40 @@ function dataUrlToBytes(dataUrl){
                 
                   // ---- Contrat coût à la page (si inclus) ----
                   if(devis.maintenance){
+                        const capEntries = Object.entries(devis.copieurs).map(([id,sel])=>{
+                              const r = DATA.copieurs.find(x=>x.id===id);
+                              if(!r) return null;
+                              const nb = sel.capNb1000!=null ? sel.capNb1000 : r.capNb1000;
+                              const col = sel.capCouleur1000!=null ? sel.capCouleur1000 : r.capCouleur1000;
+                              if(nb==null && col==null) return null;
+                              return {nom:r.nom, nb, col};
+                        }).filter(Boolean);
                         const descLines = wrapText(maint.description||"", usableWmm-8, fontReg, 7.5);
-                        const maintBoxH = 14 + descLines.length*3.6;
+                        const descH = descLines.length*3.6;
+                        const tableTopOffset = 10.5 + descH + 3;
+                        const tableH = capEntries.length ? (6 + capEntries.length*6 + 3) : 0;
+                        const ckOffset = tableTopOffset + tableH;
+                        const maintBoxH = ckOffset + 4;
                         if(ensureSpace(maintBoxH)) await drawHeader();
                         const mTop = y;
         rectMM(MXmm, mTop, usableWmm, maintBoxH, {fill:C.panelBg, stroke:C.border, strokeWidth:0.3});
-      txt(`Contrat coût à la page — ${fmt(maint.prix||0)} HT/mois (forfait indicatif)`, MXmm+4, mTop+6, {size:8.5, font:fontBold, color:C.dark});
+      txt("Contrat coût à la page (CAP)", MXmm+4, mTop+6, {size:8.5, font:fontBold, color:C.dark});
       txtBlock(descLines, MXmm+4, mTop+10.5, 3.6, {size:7.5, color:C.textSoft});
-                        const ckY = mTop + maintBoxH - 4;
+                        if(capEntries.length){
+                              let capY = mTop + tableTopOffset;
+                              rectMM(MXmm+4, capY, usableWmm-8, 6, {fill:C.dark});
+                              txt("DÉSIGNATION", MXmm+8, capY+4, {size:7, font:fontBold, color:C.white});
+                              txt("N&B /1000", MXmm+usableWmm-66, capY+4, {size:7, font:fontBold, color:C.white});
+                              txt("COULEUR /1000", MXmm+usableWmm-8, capY+4, {size:7, font:fontBold, color:C.white, align:"right"});
+                              capY += 6;
+                              capEntries.forEach(e=>{
+                                    txt(e.nom, MXmm+8, capY+4, {size:7.5, color:C.dark});
+                                    txt(e.nb!=null? fmt(e.nb)+" HT" : "—", MXmm+usableWmm-66, capY+4, {size:7.5, color:C.dark});
+                                    txt(e.col!=null? fmt(e.col)+" HT" : "—", MXmm+usableWmm-8, capY+4, {size:7.5, color:C.dark, align:"right"});
+                                    capY += 6;
+                              });
+                        }
+                        const ckY = mTop + ckOffset;
       checkbox(MXmm+4, ckY, 3.2, "J'accepte le contrat coût à la page", {size:7.3});
                         checkbox(MXmm+usableWmm/2+4, ckY, 3.2, "Je refuse le contrat coût à la page", {size:7.3});
                         y = mTop + maintBoxH + 5;
@@ -2306,7 +2375,7 @@ function toEmbedUrl(url){
   return m ? `https://www.youtube.com/embed/${m[1]}` : url;
 }
 function chiffrerDepuisCatalogue(id){
-  if(!devis.copieurs[id]) devis.copieurs[id] = {qty:1, options:[]};
+  if(!devis.copieurs[id]) addCopieurToDevis(id);
   switchView("devis");
   renderAll();
 }
@@ -2402,7 +2471,6 @@ function renderAdminAll(){
   document.getElementById("fin-financeur").value = fin.financeur;
   document.getElementById("fin-mention").value = fin.mention;
   const maint = DATA.maintenance;
-  document.getElementById("maint-prix").value = maint.prix;
   document.getElementById("maint-desc").value = maint.description || "";
   renderAdminCapTarifs();
 }
@@ -2682,33 +2750,66 @@ function saveConsum(id){
 }
 function saveMaintenance(){
   DATA.maintenance = {
-    prix: parseFloat(document.getElementById("maint-prix").value)||99,
+    ...DATA.maintenance,
     description: document.getElementById("maint-desc").value.trim()
   };
   saveData(); renderAll(); toast("Contrat coût à la page enregistré.");
 }
 
+// Regroupe les références RICOH qui ne diffèrent que par leurs options (fax, finisseur...) :
+// même famille (a4nb/a4c/a3nb/a3c) + même premier chiffre du numéro de modèle (3 ou 4 chiffres).
+// Ex. IM C3010 / C3010A / C3510 / C3510A -> un seul groupe "a3c-3". Les imprimantes HP restent
+// individuelles (leur numérotation ne suit pas cette règle "options seules").
+function computeCapGroups(){
+  const groups = [];
+  const byKey = new Map();
+  DATA.copieurs.forEach(r=>{
+    let key = null;
+    if(r.brand === "Ricoh"){
+      const m = (r.nom||"").match(/(\d{3,4})/);
+      if(m) key = r.famille + "-" + m[1][0];
+    }
+    if(!key) key = "single-" + r.id;
+    if(!byKey.has(key)){
+      const g = {key, members:[]};
+      byKey.set(key, g);
+      groups.push(g);
+    }
+    byKey.get(key).members.push(r);
+  });
+  return groups;
+}
 function renderAdminCapTarifs(){
   const wrap = document.getElementById("admin-cap-tarifs-list");
   if(!wrap) return;
-  wrap.innerHTML = DATA.copieurs.map(r=>`
-    <div class="cap-tarif-row" data-id="${r.id}">
-      <div class="cap-tarif-name">${r.nom} <span class="cap-tarif-cat">— ${r.brand} · ${r.categorie}</span></div>
-      <div class="cap-tarif-field"><label>N&B /1000 (€HT)</label><input type="number" step="0.01" min="0" class="cap-nb-input" value="${r.capNb1000!=null?r.capNb1000:''}" placeholder="ex. 7"></div>
-      <div class="cap-tarif-field"><label>Couleur /1000 (€HT)</label><input type="number" step="0.01" min="0" class="cap-couleur-input" value="${r.capCouleur1000!=null?r.capCouleur1000:''}" placeholder="ex. 70"></div>
-    </div>
-  `).join("") || `<div class="empty-state"><div class="ic">🖨️</div>Aucun copieur dans le catalogue.</div>`;
+  const groups = computeCapGroups();
+  wrap.innerHTML = groups.map(g=>{
+    const ref = g.members[0];
+    const namesLabel = g.members.map(m=>m.nom).join(" / ");
+    return `
+    <div class="cap-tarif-row" data-ids="${g.members.map(m=>m.id).join(',')}">
+      <div class="cap-tarif-name">${namesLabel} <span class="cap-tarif-cat">— ${ref.brand} · ${ref.categorie}</span></div>
+      <div class="cap-tarif-field"><label>N&B /1000 (€HT)</label><input type="number" step="0.01" min="0" class="cap-nb-input" value="${ref.capNb1000!=null?ref.capNb1000:''}" placeholder="ex. 7"></div>
+      <div class="cap-tarif-field"><label>Couleur /1000 (€HT)</label><input type="number" step="0.01" min="0" class="cap-couleur-input" value="${ref.capCouleur1000!=null?ref.capCouleur1000:''}" placeholder="ex. 70"></div>
+    </div>`;
+  }).join("") || `<div class="empty-state"><div class="ic">🖨️</div>Aucun copieur dans le catalogue.</div>`;
 }
 function saveCapTarifs(){
   document.querySelectorAll("#admin-cap-tarifs-list .cap-tarif-row").forEach(row=>{
-    const r = DATA.copieurs.find(c=>c.id===row.dataset.id);
-    if(!r) return;
+    const ids = (row.dataset.ids||"").split(",").filter(Boolean);
     const nbVal = row.querySelector(".cap-nb-input").value;
     const colVal = row.querySelector(".cap-couleur-input").value;
-    r.capNb1000 = nbVal===""? null : (parseFloat(nbVal)||0);
-    r.capCouleur1000 = colVal===""? null : (parseFloat(colVal)||0);
+    const nb = nbVal===""? null : (parseFloat(nbVal)||0);
+    const col = colVal===""? null : (parseFloat(colVal)||0);
+    ids.forEach(id=>{
+      const r = DATA.copieurs.find(c=>c.id===id);
+      if(!r) return;
+      r.capNb1000 = nb;
+      r.capCouleur1000 = col;
+    });
   });
   saveData();
+  renderAdminCapTarifs();
   toast("Tarifs au relevé enregistrés.");
 }
 
