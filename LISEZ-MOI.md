@@ -33,12 +33,12 @@ C'est cette adresse qu'il faut partager avec ton équipe (comme `https://burgatr
 
 Aller dans **Administration → Copieurs** :
 
-- **Tous les prix de vente sont à 10 000 € (placeholder)**, comme demandé — à corriger modèle par modèle avec les vrais tarifs RICOH. La mensualité (Grenke, 2,1 %, 60 mois) se recalcule automatiquement dès qu'un prix est changé.
+- **Tous les prix de vente sont des placeholders** : 10 000 € pour les 26 copieurs RICOH (comme demandé au départ), 1 000 € pour les 8 imprimantes HP ajoutées le 2026-09-02 — à corriger modèle par modèle avec les vrais tarifs. La mensualité (Grenke, 2,1 %, 60 mois) se recalcule automatiquement dès qu'un prix est changé.
 - Chaque modèle a maintenant 4 champs supplémentaires visibles dans la fiche d'édition : **Famille** (codage couleur du catalogue), **Badge distinctif** (ex. "Avec fax"), **Modèle jumeau** (le modèle à l'extérieur identique) et **Alerte anti-confusion** (texte ⚠️ affiché dès qu'on sélectionne ce modèle) — modifiables si besoin.
 - **Coordonnées Xeler Informatique, contrat CAP (coût à la page) et financement** sont préremplis — à vérifier dans les autres onglets d'Administration.
 - Le **RIB** (IBAN/BIC) a été laissé vide volontairement (je n'invente jamais ces données) — à compléter dans Administration → Entreprise si le PDF de devis doit les afficher.
 
-## 4. Le catalogue : 26 modèles, système anti-confusion
+## 4. Le catalogue : 34 modèles (26 copieurs RICOH + 8 imprimantes HP), système anti-confusion
 
 Les 4 brochures RICOH fournies (`Communication/Copieurs`) couvrent 26 références au total (3 A4 N&B, 2 A4 Couleur, 9 A3 N&B, 12 A3 Couleur). Comme demandé, chaque modèle qui a un "jumeau" à l'apparence identique (option fax, finisseur, scanner LED HP en option — le "(A)" des brochures) porte :
 
@@ -46,6 +46,19 @@ Les 4 brochures RICOH fournies (`Communication/Copieurs`) couvrent 26 référenc
 - une **alerte rouge** dès qu'il est sélectionné dans un devis, avec un lien direct vers la fiche du modèle jumeau pour comparer avant de valider
 
 Un **filtre par famille** (pastilles de couleur) permet de trier rapidement le catalogue et l'écran de chiffrage.
+
+### 4bis. Imprimantes HP pour TPE/PME (ajouté le 2026-09-02)
+
+8 imprimantes HP ont été ajoutées au même catalogue, avec les vraies photos officielles et les vraies caractéristiques (vitesse, capacité papier, chargeur de documents...) trouvées sur les pages produit et fiches techniques HP — **seul le prix de vente est un placeholder**, volontairement fixé à **1 000 €** (au lieu de 10 000 € pour les copieurs, pour ne pas ressembler à une erreur de saisie sur une imprimante) : à corriger modèle par modèle dans Administration dès que vous avez les vrais tarifs d'achat.
+
+Trois nouvelles familles dans le filtre couleur :
+- **Imprimantes N&B (HP)** : LaserJet Pro 4002dw (Wi-Fi) et 4002dn (Ethernet, sans Wi-Fi) — même boîtier, anti-confusion activée comme pour les copieurs RICOH.
+- **Imprimantes Couleur (HP)** : Color LaserJet Pro 3202dw / MFP 3302fdw (avec fax) et 4202dw / MFP 4302fdw (avec fax, plus rapides).
+- **Imprimantes Jet d'encre (HP)** : Smart Tank 7305 (réservoirs rechargeables, coût/page très bas) et OfficeJet Pro 9730e (grand format A3+, jusqu'à 11×17").
+
+**Point d'attention commercial sur l'OfficeJet Pro 9730e** : le suffixe "e" chez HP signifie que le programme **HP+** est obligatoire (compte HP, connexion internet permanente, cartouches liées à Instant Ink/HP+) — une alerte s'affiche automatiquement sur sa fiche pour le rappeler avant la vente.
+
+**Aucune fiche technique PDF constructeur n'est encore attachée** aux imprimantes HP (contrairement aux copieurs RICOH qui ont les 4 brochures fournies) — la fiche produit affiche donc automatiquement les caractéristiques déjà saisies en remplacement du PDF ; vous pouvez ajouter un lien vers le PDF constructeur HP dans Administration → Copieurs & imprimantes → Modifier → "Lien fiche technique" si vous le souhaitez.
 
 ## 5. Le reste (PDF, email, historique...) fonctionne comme l'outil robots
 

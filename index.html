@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F6F5F0">
-<title>Xeler Devis — Chiffrage copieurs</title>
+<title>Xeler Devis — Chiffrage copieurs & imprimantes</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -394,7 +394,7 @@ hr.sep{border:none; border-top:1px solid var(--card-border); margin:18px 0;}
       <div class="page-head">
         <div>
           <div class="page-title">Chiffrage rapide</div>
-          <div class="page-sub">Sélectionnez les copieurs, options et consommables pour générer un devis en direct.</div>
+          <div class="page-sub">Sélectionnez les copieurs ou imprimantes, options et consommables pour générer un devis en direct.</div>
         </div>
         <button class="btn btn-ghost btn-sm" onclick="resetDevis()">↺ Nouveau devis</button>
       </div>
@@ -413,7 +413,7 @@ hr.sep{border:none; border-top:1px solid var(--card-border); margin:18px 0;}
             </div>
           </div>
 
-          <h3 style="font-family:var(--font-display); font-size:1.05rem; margin-bottom:12px;">Copieurs</h3>
+          <h3 style="font-family:var(--font-display); font-size:1.05rem; margin-bottom:12px;">Copieurs & imprimantes</h3>
           <div id="copieur-fam-filter"></div>
           <div class="grid grid-copieurs" id="copieur-grid"></div>
 
@@ -502,7 +502,7 @@ hr.sep{border:none; border-top:1px solid var(--card-border); margin:18px 0;}
         </div>
         <div style="display:flex; gap:8px; flex-wrap:wrap;">
           <button class="btn btn-ghost" onclick="switchView('catalogue')">← Retour au catalogue</button>
-          <button class="btn btn-primary" id="fiche-chiffrer-btn">⚡ Chiffrer ce copieur</button>
+          <button class="btn btn-primary" id="fiche-chiffrer-btn">⚡ Chiffrer cet appareil</button>
         </div>
       </div>
       <div id="fiche-content"></div>
@@ -524,12 +524,12 @@ hr.sep{border:none; border-top:1px solid var(--card-border); margin:18px 0;}
       <div class="page-head">
         <div>
           <div class="page-title">Administration</div>
-          <div class="page-sub">Mise à jour des prix, copieurs, options et paramètres.</div>
+          <div class="page-sub">Mise à jour des prix, copieurs/imprimantes, options et paramètres.</div>
         </div>
       </div>
 
       <div class="tabs">
-        <button class="tab-btn active" data-tab="copieurs" onclick="switchAdminTab('copieurs')">Copieurs</button>
+        <button class="tab-btn active" data-tab="copieurs" onclick="switchAdminTab('copieurs')">Copieurs & imprimantes</button>
         <button class="tab-btn" data-tab="consommables" onclick="switchAdminTab('consommables')">Options</button>
         <button class="tab-btn" data-tab="maintenance" onclick="switchAdminTab('maintenance')">Coût à la page</button>
         <button class="tab-btn" data-tab="financement" onclick="switchAdminTab('financement')">Financement</button>
@@ -539,7 +539,7 @@ hr.sep{border:none; border-top:1px solid var(--card-border); margin:18px 0;}
       </div>
 
       <div class="admin-tab" id="admin-copieurs">
-        <button class="btn btn-primary btn-sm" style="margin-bottom:14px;" onclick="openCopieurModal(null)">+ Nouveau copieur</button>
+        <button class="btn btn-primary btn-sm" style="margin-bottom:14px;" onclick="openCopieurModal(null)">+ Nouveau modèle</button>
         <div id="admin-copieur-list"></div>
       </div>
 
@@ -1154,6 +1154,158 @@ const DEFAULT_DATA = {
       argumentaire: "Le modèle le plus rapide du catalogue Ricoh : 70 ppm couleur pour les très gros volumes.",
       fiche: "assets/fiches/Gamme_A3_Couleur.pdf",
     },
+    {
+      id: "hp-4002dw",
+      famille: "hp-nb",
+      brand: "HP",
+      nom: "LaserJet Pro 4002dw",
+      categorie: "A4 noir & blanc · 40 ppm",
+      image: "assets/copieurs/hp_nb_4002dw.jpg",
+      prixAchat: 1000,
+      distinctif: "Wi-Fi",
+      distinctifTone: "neutre",
+      jumeauDe: "hp-4002dn",
+      alerte: "⚠️ Extérieur identique au LaserJet Pro 4002dn. Celui-ci a le Wi-Fi intégré (le 4002dn n'a qu'une prise Ethernet, pas de Wi-Fi) — vérifiez le besoin de connexion sans fil du client avant de valider.",
+      description: "Imprimante laser A4 noir & blanc, impression seule (pas de scanner ni copieur). Recto-verso automatique, Wi-Fi intégré.",
+      encarts: [{titre: "Vitesse", texte: "40 ppm"}, {titre: "Connectivité", texte: "Wi-Fi, Ethernet, USB"}, {titre: "Alimentation papier", texte: "250 + 100 feuilles (bac + multifonction)"}, {titre: "Toner (rendement standard)", texte: "2 900 pages"}],
+      options: [],
+      installation: {prix: null, surDevis: true},
+      argumentaire: "L'entrée de gamme N&B la plus simple pour un poste qui n'a besoin que d'imprimer, avec le Wi-Fi intégré.",
+      fiche: "",
+    },
+    {
+      id: "hp-4002dn",
+      famille: "hp-nb",
+      brand: "HP",
+      nom: "LaserJet Pro 4002dn",
+      categorie: "A4 noir & blanc · 40 ppm",
+      image: "assets/copieurs/hp_nb_4002dw.jpg",
+      prixAchat: 1000,
+      distinctif: "Ethernet (sans Wi-Fi)",
+      distinctifTone: "neutre",
+      jumeauDe: "hp-4002dw",
+      alerte: "⚠️ Extérieur identique au LaserJet Pro 4002dw. Celui-ci N'A PAS de Wi-Fi (Ethernet filaire uniquement) — vérifiez le besoin de connexion sans fil du client avant de valider.",
+      description: "Version filaire du LaserJet Pro 4002dw : même appareil, sans Wi-Fi — connexion Ethernet uniquement. Impression seule, recto-verso automatique.",
+      encarts: [{titre: "Vitesse", texte: "40 ppm"}, {titre: "Connectivité", texte: "Ethernet, USB (pas de Wi-Fi)"}, {titre: "Alimentation papier", texte: "250 + 100 feuilles (bac + multifonction)"}, {titre: "Toner (rendement standard)", texte: "2 900 pages"}],
+      options: [],
+      installation: {prix: null, surDevis: true},
+      argumentaire: "Le même appareil que le 4002dw, en version filaire — pour un poste relié au réseau Ethernet du bureau sans besoin de Wi-Fi.",
+      fiche: "",
+    },
+    {
+      id: "hp-3202dw",
+      famille: "hp-couleur",
+      brand: "HP",
+      nom: "Color LaserJet Pro 3202dw",
+      categorie: "A4 couleur · 25 ppm",
+      image: "assets/copieurs/hp_couleur_3202dw.jpg",
+      prixAchat: 1000,
+      distinctif: "Sans fax · impression seule",
+      distinctifTone: "neutre",
+      jumeauDe: null,
+      alerte: "",
+      description: "Imprimante laser couleur A4, impression seule (pas de scanner ni copieur). Recto-verso automatique, Wi-Fi intégré.",
+      encarts: [{titre: "Vitesse", texte: "25 ppm N&B et couleur"}, {titre: "Fonctions", texte: "Impression seule"}, {titre: "Alimentation papier", texte: "250 feuilles"}, {titre: "Connectivité", texte: "Wi-Fi, Ethernet, USB"}],
+      options: [],
+      installation: {prix: null, surDevis: true},
+      argumentaire: "L'entrée de gamme couleur pour un poste qui imprime uniquement, sans besoin de scanner.",
+      fiche: "",
+    },
+    {
+      id: "hp-3302fdw",
+      famille: "hp-couleur",
+      brand: "HP",
+      nom: "Color LaserJet Pro MFP 3302fdw",
+      categorie: "A4 couleur · 25 ppm",
+      image: "assets/copieurs/hp_couleur_3302fdw.jpg",
+      prixAchat: 1000,
+      distinctif: "Avec fax",
+      distinctifTone: "fax",
+      jumeauDe: null,
+      alerte: "",
+      description: "Multifonction laser couleur A4 avec télécopieur intégré : imprimante, copieur, scanner et fax. Chargeur automatique de documents 50 feuilles.",
+      encarts: [{titre: "Vitesse", texte: "25 ppm N&B et couleur"}, {titre: "Fonctions", texte: "Impression, copie, scan, fax"}, {titre: "Chargeur de documents (ADF)", texte: "50 feuilles"}, {titre: "Alimentation papier", texte: "250 feuilles + margeur 1 feuille"}],
+      options: [],
+      installation: {prix: null, surDevis: true},
+      argumentaire: "Le bon compromis pour un petit bureau qui a encore besoin du fax, en plus du scanner et de la copie couleur.",
+      fiche: "",
+    },
+    {
+      id: "hp-4202dw",
+      famille: "hp-couleur",
+      brand: "HP",
+      nom: "Color LaserJet Pro 4202dw",
+      categorie: "A4 couleur · 33 ppm",
+      image: "assets/copieurs/hp_couleur_4202dw.jpg",
+      prixAchat: 1000,
+      distinctif: "Sans fax · impression seule",
+      distinctifTone: "neutre",
+      jumeauDe: null,
+      alerte: "",
+      description: "Imprimante laser couleur A4, impression seule, plus rapide que le 3202dw. Recto-verso automatique, Wi-Fi intégré.",
+      encarts: [{titre: "Vitesse", texte: "35 ppm (lettre) / 33 ppm (A4)"}, {titre: "Fonctions", texte: "Impression seule"}, {titre: "Alimentation papier", texte: "250 + 50 feuilles (bac + multifonction)"}, {titre: "Connectivité", texte: "Wi-Fi, Ethernet, USB, Bluetooth LE"}],
+      options: [],
+      installation: {prix: null, surDevis: true},
+      argumentaire: "Pour un poste qui imprime beaucoup en couleur sans besoin de scanner : la vitesse la plus élevée sans MFP.",
+      fiche: "",
+    },
+    {
+      id: "hp-4302fdw",
+      famille: "hp-couleur",
+      brand: "HP",
+      nom: "Color LaserJet Pro MFP 4302fdw",
+      categorie: "A4 couleur · 33 ppm",
+      image: "assets/copieurs/hp_couleur_4302fdw.jpg",
+      prixAchat: 1000,
+      distinctif: "Avec fax",
+      distinctifTone: "fax",
+      jumeauDe: null,
+      alerte: "",
+      description: "Multifonction laser couleur A4 avec télécopieur intégré, plus rapide que le 3302fdw. Chargeur automatique de documents 50 feuilles, fax 33,6 kbps.",
+      encarts: [{titre: "Vitesse", texte: "35 ppm (lettre) / 33 ppm (A4)"}, {titre: "Fonctions", texte: "Impression, copie, scan, fax"}, {titre: "Chargeur de documents (ADF)", texte: "50 feuilles"}, {titre: "Toner (rendement standard)", texte: "≈2 000 p. N&B / ≈1 000 p. couleur"}],
+      options: [],
+      installation: {prix: null, surDevis: true},
+      argumentaire: "Le haut de gamme couleur A4 de la sélection : le multifonction le plus rapide avec fax intégré.",
+      fiche: "",
+    },
+    {
+      id: "hp-smarttank7305",
+      famille: "hp-jet",
+      brand: "HP",
+      nom: "Smart Tank 7305",
+      categorie: "A4 couleur réservoir · 15/9 ppm",
+      image: "assets/copieurs/hp_jet_smarttank7305.jpg",
+      prixAchat: 1000,
+      distinctif: "Réservoirs rechargeables",
+      distinctifTone: "neutre",
+      jumeauDe: null,
+      alerte: "",
+      description: "Multifonction jet d'encre à réservoirs rechargeables : coût à la page très bas pour un gros volume d'impression couleur, sans contrat. Pas de fax.",
+      encarts: [{titre: "Vitesse", texte: "15 ppm N&B / 9 ppm couleur"}, {titre: "Fonctions", texte: "Impression, copie, scan"}, {titre: "Réservoirs d'encre", texte: "Rechargeables, grande autonomie"}, {titre: "Connectivité", texte: "Wi-Fi, Ethernet, USB"}],
+      options: [],
+      installation: {prix: null, surDevis: true},
+      argumentaire: "Pour un client qui imprime beaucoup en couleur et veut un coût par page très bas sans passer par un contrat CAP — l'encre se recharge par flacon.",
+      fiche: "",
+    },
+    {
+      id: "hp-officejet9730e",
+      famille: "hp-jet",
+      brand: "HP",
+      nom: "OfficeJet Pro 9730e",
+      categorie: "Grand format A3+ · 22 ppm",
+      image: "assets/copieurs/hp_jet_officejet9730e.jpg",
+      prixAchat: 1000,
+      distinctif: "Grand format A3+",
+      distinctifTone: "neutre",
+      jumeauDe: null,
+      alerte: "⚠️ Modèle « e » = inscription HP+ obligatoire (compte HP et connexion internet permanente) et cartouches liées au programme HP+/Instant Ink — informez le client avant la vente si ce fonctionnement ne lui convient pas.",
+      description: "Multifonction jet d'encre grand format (jusqu'à A3+ / 11×17\"), sans fax. Modèle « e » : inscription HP+ requise, cartouches liées à Instant Ink/HP+.",
+      encarts: [{titre: "Vitesse", texte: "22 ppm N&B / 18 ppm couleur"}, {titre: "Format papier", texte: "Jusqu'à 11×17\" (A3+), sans bordure"}, {titre: "Chargeur de documents (ADF)", texte: "35 feuilles"}, {titre: "Fonctions", texte: "Impression, copie, scan — pas de fax"}],
+      options: [],
+      installation: {prix: null, surDevis: true},
+      argumentaire: "Le seul modèle de la sélection capable d'imprimer en grand format A3+, sans passer par un copieur A3.",
+      fiche: "",
+    },
   ],
   consommables: [
     {id: "tn-noir-std", nom: "Toner noir (rendement standard)", prix: 90, unite: "unité", modeles: []},
@@ -1185,6 +1337,10 @@ function loadData(){
   if(!data.maintenance) data.maintenance = JSON.parse(JSON.stringify(DEFAULT_DATA.maintenance));
   (data.consommables||[]).forEach(c=>{ if(c.modeles===undefined) c.modeles = []; });
   (data.copieurs||[]).forEach(r=>{ if(r.prixLocation!==undefined) delete r.prixLocation; });
+  // Ajoute au catalogue existant les nouveaux modèles introduits dans une mise à jour
+  // (ex. gamme imprimantes HP) sans toucher aux modèles déjà présents/modifiés par l'utilisateur.
+  const existingIds = new Set((data.copieurs||[]).map(c=>c.id));
+  DEFAULT_DATA.copieurs.forEach(c=>{ if(!existingIds.has(c.id)) data.copieurs.push(JSON.parse(JSON.stringify(c))); });
   return data;
 }
 function saveData(){ localStorage.setItem(LS_KEY, JSON.stringify(DATA)); }
@@ -1208,7 +1364,10 @@ const FAM = {
   a4nb: {label:"A4 Noir & Blanc", color:"#5C6B8A", soft:"rgba(92,107,138,0.14)"},
   a3nb: {label:"A3 Noir & Blanc", color:"#16213E", soft:"rgba(22,33,62,0.09)"},
   a4c:  {label:"A4 Couleur",      color:"#E2635F", soft:"rgba(226,99,95,0.14)"},
-  a3c:  {label:"A3 Couleur",      color:"#C8102E", soft:"rgba(200,16,46,0.11)"}
+  a3c:  {label:"A3 Couleur",      color:"#C8102E", soft:"rgba(200,16,46,0.11)"},
+  "hp-nb":      {label:"Imprimantes N&B (HP)",      color:"#0073B1", soft:"rgba(0,115,177,0.13)"},
+  "hp-couleur": {label:"Imprimantes Couleur (HP)",  color:"#D14900", soft:"rgba(209,73,0,0.13)"},
+  "hp-jet":     {label:"Imprimantes Jet d'encre (HP)", color:"#2E8B57", soft:"rgba(46,139,87,0.13)"}
 };
 let gridFamilyFilter = null;
 let catalogueFamilyFilter = null;
