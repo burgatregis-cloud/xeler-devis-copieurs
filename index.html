@@ -1677,9 +1677,11 @@ function renderSummary(){
     <div class="sum-line"><span>Copieurs, options &amp; installation HT</span><span>${fmt(t.ht)}</span></div>
     ${t.installationSurDevisCount>0? `<div class="sum-line" style="font-size:0.78rem;"><span>dont installation sur devis (${t.installationSurDevisCount} copieur${t.installationSurDevisCount>1?'s':''})</span><span>nous consulter</span></div>` : ''}
     ${t.remiseAmount? `<div class="sum-line"><span>Remise</span><span>− ${fmt(t.remiseAmount)}</span></div>` : ''}
-    <div class="sum-line"><span>TVA (20%)</span><span>${fmt(t.tva)}</span></div>
-    <div class="sum-line total"><span>Comptant TTC</span><span class="val">${fmt(t.ttc)}</span></div>
-    <div class="sum-line total" style="font-size:1rem;"><span>ou ${fin.financeur} ${fin.duree} mois TTC</span><span class="val">${fmt(t.mensualiteTtc)}/mois</span></div>
+    <div class="sum-line total"><span>Comptant HT</span><span class="val">${fmt(t.htNet)}</span></div>
+    <div class="sum-line" style="font-size:0.75rem; color:var(--text-faint); margin-top:-6px;"><span>dont TVA (20%)</span><span>${fmt(t.tva)}</span></div>
+    <div class="sum-line" style="font-size:0.75rem; color:var(--text-faint);"><span>soit TTC</span><span>${fmt(t.ttc)}</span></div>
+    <div class="sum-line total" style="font-size:1rem;"><span>ou ${fin.financeur} ${fin.duree} mois HT</span><span class="val">${fmt(t.mensualiteHT)}/mois</span></div>
+    <div class="sum-line" style="font-size:0.75rem; color:var(--text-faint); margin-top:-6px;"><span>soit TTC</span><span>${fmt(t.mensualiteTtc)}/mois</span></div>
     ${devis.maintenance? `<div class="sum-line" style="font-size:0.78rem; color:var(--text-faint);"><span>Contrat coût à la page</span><span>tarifs au relevé (voir devis)</span></div>` : ''}
   `;
 }
@@ -1829,16 +1831,17 @@ function renderDocument(){
     <div class="doc-totals-dark">
       <div class="doc-totals-block">
         <div class="doc-totals-title">Comptant</div>
-        <div class="row"><span>Total HT</span><span>${fmt(t.ht)}</span></div>
+        <div class="row"><span>Sous-total HT</span><span>${fmt(t.ht)}</span></div>
         <div class="row"><span>Remise</span><span>− ${fmt(t.remiseAmount)}</span></div>
-        <div class="row"><span>TVA (20%)</span><span>${fmt(t.tva)}</span></div>
-        <div class="row total"><span>Total TTC</span><span>${fmt(t.ttc)}</span></div>
+        <div class="row total"><span>Total HT</span><span>${fmt(t.htNet)}</span></div>
+        <div class="row" style="font-size:0.74rem; color:var(--text-faint);"><span>dont TVA (20%)</span><span>${fmt(t.tva)}</span></div>
+        <div class="row" style="font-size:0.74rem; color:var(--text-faint);"><span>Total TTC</span><span>${fmt(t.ttc)}</span></div>
       </div>
       <div class="doc-totals-block accent">
         <div class="doc-totals-title">Location ${fin.financeur} — ${fin.duree} mois</div>
-        <div class="row"><span>Mensualité HT</span><span>${fmt(t.mensualiteHT)}</span></div>
-        <div class="row"><span>TVA (20%)</span><span>${fmt(t.mensualiteTva)}</span></div>
-        <div class="row total"><span>Mensualité TTC</span><span>${fmt(t.mensualiteTtc)}/mois</span></div>
+        <div class="row total"><span>Mensualité HT</span><span>${fmt(t.mensualiteHT)}</span></div>
+        <div class="row" style="font-size:0.74rem; color:var(--text-faint);"><span>dont TVA (20%)</span><span>${fmt(t.mensualiteTva)}</span></div>
+        <div class="row" style="font-size:0.74rem; color:var(--text-faint);"><span>Mensualité TTC</span><span>${fmt(t.mensualiteTtc)}/mois</span></div>
       </div>
     </div>
     <div class="doc-fin-mention">${fin.mention}</div>
@@ -2113,37 +2116,39 @@ function dataUrlToBytes(dataUrl){
     // ---- Totals ----
     const hasMensualite = t.mensualiteTtc > 0;
     const boxW = hasMensualite ? (usableWmm-6)/2 : usableWmm;
-    const comptantRows = [["Total HT", fmt(t.ht)]];
+    const comptantRows = [["Sous-total HT", fmt(t.ht)]];
     if(t.hasRemise) comptantRows.push(["Remise", "− "+fmt(t.remiseAmount)]);
-    comptantRows.push(["TVA (20%)", fmt(t.tva)]);
+    const comptantBoldIdx = comptantRows.push(["Total HT", fmt(t.htNet)]) - 1;
+    comptantRows.push(["dont TVA (20%)", fmt(t.tva)]);
     comptantRows.push(["Total TTC", fmt(t.ttc)]);
                   const boxH = 8 + comptantRows.length*6.5;
                   if(ensureSpace(boxH)) await drawHeader();
                   const boxTop = y;
-                
-                  function totalsBox(x, w, title, rows, highlight){
+
+                  function totalsBox(x, w, title, rows, highlight, boldIdx){
                         rectMM(x, boxTop, w, boxH, {fill: highlight?C.panelAccentBg:C.panelBg, stroke:C.border, strokeWidth:0.3});
       const titleY = boxTop + 6;
       txt(title, x+4, titleY, {size:8.5, font:fontBold, color:C.dark});
       const rowsTop = titleY + 4;
                         const rowsAvailH = (boxTop + boxH - 4) - rowsTop;
       const rowH = rowsAvailH / rows.length;
+                        const idxToBold = boldIdx!=null ? boldIdx : rows.length-1;
                         rows.forEach((row,i)=>{
-        const isLast = i===rows.length-1;
+        const isBold = i===idxToBold;
                   const ry = rowsTop + rowH*i + rowH*0.72;
-                                const opts = {size: isLast?9.5:8, font: isLast?fontBold:fontReg, color: isLast?C.accent:C.textSoft};
+                                const opts = {size: isBold?9.5:8, font: isBold?fontBold:fontReg, color: isBold?C.accent:C.textSoft};
             txt(row[0], x+4, ry, opts);
                                 txt(row[1], x+w-4, ry, {...opts, align:"right"});
 });
     }
-    
-    totalsBox(MXmm, boxW, "Comptant", comptantRows, false);
+
+    totalsBox(MXmm, boxW, "Comptant", comptantRows, false, comptantBoldIdx);
     if(hasMensualite){
       totalsBox(MXmm+boxW+6, boxW, `Location ${fin.financeur} — ${fin.duree} mois`, [
         ["Mensualité HT", fmt(t.mensualiteHT)],
-              ["TVA (20%)", fmt(t.mensualiteTva)],
+              ["dont TVA (20%)", fmt(t.mensualiteTva)],
               ["Mensualité TTC", fmt(t.mensualiteTtc)+"/mois"]
-            ], true);
+            ], true, 0);
     }
                   y = boxTop + boxH + 4;
   
